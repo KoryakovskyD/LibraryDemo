@@ -4,6 +4,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.IOException;
 
 public class MainFrame extends JFrame {
     private final JTable booksTable;
@@ -13,11 +16,31 @@ public class MainFrame extends JFrame {
         super("Library books");
 
         setBounds(300,200,500,400);
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
+        addWindowListener(new WindowAdapter() {
+            // нажатие на крестик
+            @Override
+            public void windowClosing(WindowEvent e) {
+                saveAndExit();
+            }
+
+            // метод вызывается после того, как окно закрыто
+            @Override
+            public void windowClosed(WindowEvent e) {
+                System.exit(0);
+            }
+        });
 
         intMenuBar();
 
-        booksModel = new BooksTableModel();
+        BooksTableModel btm = null;
+        try {
+            btm = new BooksTableModel();
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            System.exit(1);
+        }
+        booksModel = btm;
         booksTable = new JTable(booksModel);
         initLayout();
     }
@@ -49,6 +72,7 @@ public class MainFrame extends JFrame {
         menuItem = new JMenuItem("Delete...");
         menuItem.setMnemonic(KeyEvent.VK_D);
         menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.ALT_DOWN_MASK));
+        menuItem.addActionListener(e -> deleteBook());
         menu.add(menuItem);
 
         menuBar.add(menu);
@@ -61,6 +85,36 @@ public class MainFrame extends JFrame {
         // заход в меню по нажатию комбинации клавиш
         // menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.ALT_DOWN_MASK));
 
+    }
+
+    private void deleteBook() {
+        int rowNdx = booksTable.getSelectedRow();
+        if (rowNdx == -1)
+            return;
+
+        Book book = booksModel.getBook(rowNdx);
+        if (JOptionPane.showConfirmDialog(this, "Are you sure want to delete book with code" +
+                book.getBookCode() + "?", "Delete confirmation", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE)
+                == JOptionPane.YES_OPTION) {
+            booksModel.deleteBook(rowNdx);
+        }
+    }
+
+
+    private void saveAndExit() {
+        if (JOptionPane.showConfirmDialog(this, "Are you sure want to exit?", "Exit confirmation",
+                JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE)
+                == JOptionPane.YES_OPTION) {
+            try {
+                booksModel.save();
+            } catch (IOException e) {
+                if (JOptionPane.showConfirmDialog(this, "Error saving books list to a file "  +
+                        e.getMessage() + ".\n" + "Are you still sure you want to exit?","Exit conformation",
+                        JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE) == JOptionPane.NO_OPTION)
+                    return;
+            }
+            dispose();
+        }
     }
 
     private void addBook() {
@@ -99,7 +153,10 @@ public class MainFrame extends JFrame {
             if (!dlg.isOkPressed())
                 return;
             try {
-
+                book.setIsbn(dlg.getIsbnText());
+                book.setName(dlg.getName());
+                book.setAuthors(dlg.getAuthorText());
+                book.setPublishYear(Integer.parseInt(dlg.getPublishYearText()));
                 booksModel.bookChanged(rowNdx);
                 return;
                 } catch (Exception e) {

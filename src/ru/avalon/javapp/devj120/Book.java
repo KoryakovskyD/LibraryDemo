@@ -1,6 +1,8 @@
 package ru.avalon.javapp.devj120;
 
-public class Book {
+import java.io.Serializable;
+
+public class Book implements Serializable {
     private final String bookCode;
     private String isbn;
     private String name;

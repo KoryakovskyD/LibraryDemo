@@ -3,6 +3,7 @@ package ru.avalon.javapp.devj120;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,8 +24,12 @@ public class BooksTableModel implements TableModel {
             Integer.class,
     };
 
-    private final BooksList booksList = new BooksList();
+    private final BooksList booksList;
     private final List<TableModelListener> listeners = new ArrayList<>();
+
+    public BooksTableModel() throws IOException, ClassNotFoundException {
+        this.booksList = new BooksList();
+    }
 
     @Override
     public int getColumnCount() {
@@ -102,5 +107,15 @@ public class BooksTableModel implements TableModel {
         TableModelEvent tme = new TableModelEvent(this, rowNdx, rowNdx,
                 TableModelEvent.ALL_COLUMNS, TableModelEvent.UPDATE);
         fireTableModeEvent(tme);
+    }
+
+    public void deleteBook(int bookIndex) {
+        booksList.remove(bookIndex);
+            TableModelEvent tme = new TableModelEvent(this, bookIndex, bookIndex, TableModelEvent.ALL_COLUMNS, TableModelEvent.DELETE);
+            fireTableModeEvent(tme);
+    }
+
+    public void save() throws  IOException {
+        booksList.save();
     }
 }

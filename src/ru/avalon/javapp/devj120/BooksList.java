@@ -1,13 +1,33 @@
 package ru.avalon.javapp.devj120;
 
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 public class BooksList {
-    private final List<Book> books = new ArrayList<>();
-    private final Set<String > bookCodes = new HashSet<>();
+    private static final String FILE_NAME = "books.dat";
+
+    private final List<Book> books;
+    private final Set<String> bookCodes;
+
+    public BooksList() throws IOException, ClassNotFoundException {
+        File f = new File(FILE_NAME);
+        if (f.exists()) {
+            try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(f))) {
+                books = (List<Book>) ois.readObject();
+                bookCodes = new HashSet<>();
+                for (Book b : books) {
+                    bookCodes.add(b.getBookCode());
+                }
+            }
+        } else {
+            books = new ArrayList<>();
+            bookCodes = new HashSet<>();
+        }
+
+    }
 
     public Book get(int index) {
         return books.get(index);
@@ -28,5 +48,11 @@ public class BooksList {
         Book b = books.get(index);
         bookCodes.remove(b.getBookCode());
         books.remove(index);
+    }
+
+    public void save() throws IOException {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(FILE_NAME))) {
+            oos.writeObject(books);
+        }
     }
 }
